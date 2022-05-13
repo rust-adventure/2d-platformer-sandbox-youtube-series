@@ -77,10 +77,10 @@ fn gamepad_input(
             &mut Climber,
             &mut TextureAtlasSprite,
             Option<&AnimationTimer>,
+            &GroundDetection,
         ),
         With<Player>,
     >,
-    ground_detection: Res<GroundDetection>,
 ) {
     let gamepad = if let Some(gp) = my_gamepad {
         // a gamepad is connected, we have the id
@@ -97,6 +97,7 @@ fn gamepad_input(
         mut climber,
         mut sprite,
         timer,
+        ground_detection,
     ) in query.iter_mut()
     {
         // The joysticks are represented using a separate axis for X and Y
