@@ -8,11 +8,17 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.57"
 bevy = "0.7.0"
-bevy_asset_loader = { version = "0.10.0", features = ["2d"] }
+bevy_asset_loader = { version = "0.11.0", features = [
+    "2d",
+    "stageless",
+    "progress_tracking",
+    "progress_tracking_stageless",
+] }
 bevy_ecs_ldtk = "0.3.0"
 bevy_ecs_tilemap = "0.6.0"
 heron = { version = "3.0", features = ["2d"] }
 iyes_loopless = "0.5.1"
+iyes_progress = { version = "0.3.0", features = ["iyes_loopless"] }
 ldtk_rust = "0.5.3"
 serde = "1.0.136"
 serde_json = "1.0.79"

@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use heron::Velocity;
-use iyes_loopless::prelude::*;
 
 use crate::components::{Climber, GroundDetection, Player};
 
@@ -22,12 +21,7 @@ fn gamepad_connections(
     mut commands: Commands,
     my_gamepad: Option<Res<MyGamepad>>,
     mut gamepad_evr: EventReader<GamepadEvent>,
-    // gamepads: Res<Gamepads>,
 ) {
-    // dbg!("connections");
-    // for pad in gamepads.iter() {
-    //     dbg!(pad);
-    // }
     for GamepadEvent(id, kind) in gamepad_evr.iter() {
         match kind {
             GamepadEventType::Connected => {
