@@ -143,7 +143,7 @@ pub fn spawn_wall_collision(
                     .layer_instances
                     .clone()
                     .expect("Level asset should have layers")[0];
-
+dbg!(width,height);
                 // combine wall tiles into flat "plates" in each individual row
                 let mut plate_stack: Vec<Vec<Plate>> = Vec::new();
 
@@ -409,7 +409,6 @@ pub fn update_level_selection(
                 right: level_transform.translation.x
                     + ldtk_level.level.px_wid as f32,
             };
-
             for player_transform in player_query.iter() {
                 if player_transform.translation.x
                     < level_bounds.right
@@ -419,9 +418,10 @@ pub fn update_level_selection(
                         < level_bounds.top
                     && player_transform.translation.y
                         > level_bounds.bottom
-                    && !level_selection
-                        .is_match(&0, &ldtk_level.level)
+                // && !level_selection
+                //     .is_match(&0, &ldtk_level.level)
                 {
+                    dbg!("level set");
                     *level_selection = LevelSelection::Iid(
                         ldtk_level.level.iid.clone(),
                     );

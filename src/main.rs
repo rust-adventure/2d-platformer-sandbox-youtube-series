@@ -1,21 +1,18 @@
 use bevy::prelude::*;
 use bevy_asset_loader::{AssetCollection, AssetLoader};
 use bevy_ecs_ldtk::prelude::*;
-use components::GroundDetection;
-use gamepad::GamepadPlugin;
-use heron::{Gravity, PhysicsPlugin};
+use heron::{Gravity, PhysicsPlugin, Velocity};
 use iyes_loopless::prelude::*;
 use iyes_progress::{ProgressCounter, ProgressPlugin};
+use leafwing_input_manager::prelude::*;
+use platformer::{
+    actions::PlatformerAction,
+    components::{self, Climber, GroundDetection, Player},
+    gamepad::{AnimationTimer, GamepadPlugin},
+    movement::MovementPlugin,
+    systems, GameState,
+};
 
-mod components;
-mod gamepad;
-mod systems;
-
-#[derive(Clone, Eq, PartialEq, Debug, Hash)]
-enum GameState {
-    AssetLoading,
-    Playing,
-}
 fn main() {
     let mut app = App::new();
     app.add_loopless_state(GameState::AssetLoading);
@@ -34,6 +31,20 @@ fn main() {
             0.0, -2000., 0.0,
         )))
         .add_plugin(LdtkPlugin)
+        .add_plugin(MovementPlugin)
+        .add_plugin(
+            InputManagerPlugin::<PlatformerAction>::default(
+            ),
+        )
+        .insert_resource(LdtkSettings {
+            level_spawn_behavior:
+                LevelSpawnBehavior::UseWorldTranslation {
+                    load_level_neighbors: true,
+                },
+            set_clear_color:
+                SetClearColor::FromLevelBackground,
+            ..Default::default()
+        })
         .insert_resource(LevelSelection::Index(0))
         .insert_resource(GroundDetection {
             on_ground: false,

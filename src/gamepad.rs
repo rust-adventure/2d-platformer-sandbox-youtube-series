@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 use heron::Velocity;
+use leafwing_input_manager::prelude::InputMap;
 
+use crate::actions::*;
 use crate::components::{Climber, GroundDetection, Player};
 
 pub struct GamepadPlugin;
@@ -8,14 +10,15 @@ pub struct GamepadPlugin;
 impl Plugin for GamepadPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(gamepad_connections)
-            .add_system(gamepad_input)
+            // .add_system(gamepad_input)
+            .add_system(on_change_gamepad)
             .add_system(animate_sprite);
     }
 }
 /// Simple resource to store the ID of the connected gamepad.
 /// We need to know which gamepad to use for player input.
 #[derive(Debug)]
-struct MyGamepad(Gamepad);
+pub struct MyGamepad(pub Gamepad);
 
 fn gamepad_connections(
     mut commands: Commands,
@@ -59,6 +62,18 @@ fn gamepad_connections(
     }
 }
 
+fn on_change_gamepad(
+    gamepad: Option<Res<MyGamepad>>,
+    mut input_map: Query<&mut InputMap<PlatformerAction>>,
+) {
+    if let Some(gamepad) = gamepad {
+        if gamepad.is_changed() {
+            for mut map in input_map.iter_mut() {
+                map.set_gamepad(gamepad.0);
+            }
+        }
+    }
+}
 fn gamepad_input(
     mut commands: Commands,
     axes: Res<Axis<GamepadAxis>>,
@@ -181,7 +196,7 @@ fn gamepad_input(
 }
 
 #[derive(Component, Deref, DerefMut)]
-struct AnimationTimer(Timer);
+pub struct AnimationTimer(pub Timer);
 
 fn animate_sprite(
     time: Res<Time>,

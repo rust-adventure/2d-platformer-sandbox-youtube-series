@@ -1,7 +1,11 @@
+use crate::actions::PlatformerAction;
 use bevy::prelude::*;
 use bevy_ecs_ldtk::{
     prelude::*,
     utils::ldtk_pixel_coords_to_translation_pivoted,
+};
+use leafwing_input_manager::{
+    prelude::InputMap, InputManagerBundle,
 };
 
 use std::collections::HashSet;
@@ -84,6 +88,71 @@ impl From<IntGridCell> for ColliderBundle {
     }
 }
 
+#[derive(Bundle)]
+pub struct PlayerInput {
+    #[bundle]
+    input: InputManagerBundle<PlatformerAction>,
+}
+impl Default for PlayerInput {
+    fn default() -> Self {
+        use PlatformerAction::*;
+
+        let mut input_map = InputMap::default();
+
+        // basic movement
+        input_map.insert(Up, KeyCode::W);
+        input_map.insert(Up, GamepadButtonType::DPadUp);
+
+        input_map.insert(Down, KeyCode::S);
+        input_map.insert(Down, GamepadButtonType::DPadDown);
+
+        input_map.insert(Left, KeyCode::A);
+        input_map.insert(Left, GamepadButtonType::DPadLeft);
+
+        input_map.insert(Right, KeyCode::D);
+        input_map
+            .insert(Right, GamepadButtonType::DPadRight);
+
+        // Jump
+        input_map
+            .insert(PlatformerAction::Jump, KeyCode::Space);
+        input_map.insert(
+            PlatformerAction::Jump,
+            GamepadButtonType::South,
+        );
+
+        input_map
+            .insert(PlatformerAction::Dash, KeyCode::E);
+        input_map.insert(
+            PlatformerAction::Dash,
+            GamepadButtonType::RightTrigger2,
+        );
+
+        input_map.insert(
+            PlatformerAction::Pause,
+            KeyCode::Return,
+        );
+        input_map.insert(
+            PlatformerAction::Pause,
+            GamepadButtonType::Start,
+        );
+
+        input_map
+            .insert(PlatformerAction::Menus, KeyCode::I);
+        input_map.insert(
+            PlatformerAction::Menus,
+            GamepadButtonType::Select,
+        );
+
+        Self {
+            input: InputManagerBundle::<PlatformerAction> {
+                input_map,
+                ..Default::default()
+            },
+        }
+    }
+}
+
 #[derive(
     Clone, Component, Debug, Eq, Default, PartialEq,
 )]
@@ -126,7 +195,7 @@ pub struct Climber {
     pub intersecting_climbables: HashSet<Entity>,
 }
 
-#[derive(Clone, Default, Bundle, LdtkEntity)]
+#[derive(Default, Bundle, LdtkEntity)]
 pub struct PlayerBundle {
     #[sprite_sheet_bundle(
         "zombie_tilesheet.png",
@@ -155,6 +224,9 @@ pub struct PlayerBundle {
     // The whole EntityInstance can be stored directly as an EntityInstance component
     #[from_entity_instance]
     entity_instance: EntityInstance,
+
+    #[bundle]
+    pub input: PlayerInput,
 }
 
 #[derive(
