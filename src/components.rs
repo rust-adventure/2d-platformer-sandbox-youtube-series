@@ -4,9 +4,7 @@ use bevy_ecs_ldtk::{
     prelude::*,
     utils::ldtk_pixel_coords_to_translation_pivoted,
 };
-use leafwing_input_manager::{
-    prelude::InputMap, InputManagerBundle,
-};
+use leafwing_input_manager::prelude::*;
 
 use std::collections::HashSet;
 
@@ -100,50 +98,58 @@ impl Default for PlayerInput {
         let mut input_map = InputMap::default();
 
         // basic movement
-        input_map.insert(Up, KeyCode::W);
-        input_map.insert(Up, GamepadButtonType::DPadUp);
+        input_map.insert(KeyCode::W, Up);
+        input_map.insert(GamepadButtonType::DPadUp, Up);
 
-        input_map.insert(Down, KeyCode::S);
-        input_map.insert(Down, GamepadButtonType::DPadDown);
+        input_map.insert(KeyCode::S, Down);
+        input_map.insert(GamepadButtonType::DPadDown, Down);
 
-        input_map.insert(Left, KeyCode::A);
-        input_map.insert(Left, GamepadButtonType::DPadLeft);
+        input_map.insert(KeyCode::A, Left);
+        input_map.insert(GamepadButtonType::DPadLeft, Left);
 
-        input_map.insert(Right, KeyCode::D);
+        input_map.insert(
+            SingleGamepadAxis::symmetric(
+                GamepadAxisType::LeftStickX,
+                0.1,
+            ),
+            Horizontal,
+        );
+
+        input_map.insert(KeyCode::D, Right);
         input_map
-            .insert(Right, GamepadButtonType::DPadRight);
+            .insert(GamepadButtonType::DPadRight, Right);
 
         // Jump
         input_map
-            .insert(PlatformerAction::Jump, KeyCode::Space);
+            .insert(KeyCode::Space, PlatformerAction::Jump);
         input_map.insert(
-            PlatformerAction::Jump,
             GamepadButtonType::South,
+            PlatformerAction::Jump,
         );
 
         input_map
-            .insert(PlatformerAction::Dash, KeyCode::E);
+            .insert(KeyCode::E, PlatformerAction::Dash);
         input_map.insert(
-            PlatformerAction::Dash,
             GamepadButtonType::RightTrigger2,
+            PlatformerAction::Dash,
         );
 
         input_map.insert(
-            PlatformerAction::Pause,
             KeyCode::Return,
+            PlatformerAction::Pause,
         );
         input_map.insert(
-            PlatformerAction::Pause,
             GamepadButtonType::Start,
+            PlatformerAction::Pause,
         );
 
         input_map
-            .insert(PlatformerAction::Menus, KeyCode::I);
+            .insert(KeyCode::I, PlatformerAction::Menus);
         input_map.insert(
-            PlatformerAction::Menus,
             GamepadButtonType::Select,
+            PlatformerAction::Menus,
         );
-
+        input_map.set_gamepad(Gamepad(0));
         Self {
             input: InputManagerBundle::<PlatformerAction> {
                 input_map,

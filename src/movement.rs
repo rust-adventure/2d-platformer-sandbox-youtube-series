@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use heron::Velocity;
+use heron::{
+    rapier_plugin::{convert::IntoRapier, RigidBodyHandle},
+    Gravity, RigidBody, Velocity,
+};
 use iyes_loopless::prelude::IntoConditionalSystem;
 use leafwing_input_manager::prelude::*;
 
@@ -10,13 +13,26 @@ pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(
-            jump.run_in_state(GameState::Playing),
-        )
-        // .add_system(Movement_input)
-        .add_system(
-            horizontal.run_in_state(GameState::Playing),
-        );
+        app.init_resource::<PlayerState>()
+            .add_system(
+                jump.run_in_state(GameState::Playing),
+            )
+            // // .add_system(Movement_input)
+            .add_system(
+                horizontal.run_in_state(GameState::Playing),
+            )
+            .add_system(debug_actions);
+    }
+}
+
+enum PlayerState {
+    Idle,
+    Jumping,
+    Falling,
+}
+impl Default for PlayerState {
+    fn default() -> Self {
+        PlayerState::Idle
     }
 }
 
@@ -35,10 +51,14 @@ fn jump(
             &mut Climber,
             &mut TextureAtlasSprite,
             // Option<&AnimationTimer>,
+            &RigidBodyHandle,
             &GroundDetection,
         ),
         With<Player>,
     >,
+    player_state: Res<PlayerState>,
+    mut gravity: ResMut<Gravity>,
+    time: Res<Time>,
 ) {
     for action_state in query_action_state.iter() {
         for (
@@ -47,14 +67,29 @@ fn jump(
             mut climber,
             mut sprite,
             // timer,
+            body,
             ground_detection,
         ) in query_player.iter_mut()
         {
             if action_state
+                .just_released(PlatformerAction::Jump)
+                && velocity.linear.y >= 0.0
+            {
+                // *gravity = Gravity::from(Vec3::new(
+                //     0.0, -6000., 0.0,
+                // ));
+
+                // body.into_rapier().0..set_gravity_scale(3.);
+
+                // This feels way too abrupt
+                // should increase gravity instead
+                // velocity.linear.y = 0.3 * velocity.linear.y;
+            } else if action_state
                 .just_pressed(PlatformerAction::Jump)
                 && ground_detection.on_ground
             {
                 velocity.linear.y = 900.;
+
                 sprite.index = 1;
                 // if let Some(_) = timer {
                 //     commands
@@ -105,9 +140,46 @@ fn horizontal(
             {
                 velocity.linear.x = -300.;
                 sprite.flip_x = true;
+            } else if action_state
+                .pressed(PlatformerAction::Horizontal)
+            {
+                let move_value = action_state.action_value(
+                    PlatformerAction::Horizontal,
+                );
+                if move_value == 0.0 {
+                    velocity.linear.x = 0.;
+                } else if move_value.signum() == 1.0 {
+                    velocity.linear.x = 300.;
+                    sprite.flip_x = false;
+                } else if move_value.signum() == -1.0 {
+                    velocity.linear.x = -300.;
+                    sprite.flip_x = true;
+                } else {
+                    error!(
+                        "unexpected move_value {}",
+                        move_value
+                    );
+                }
             } else {
                 velocity.linear.x = 0.;
             }
+        }
+    }
+}
+
+fn debug_actions(
+    query_action_state: Query<
+        &ActionState<PlatformerAction>,
+    >,
+) {
+    for action in query_action_state.iter() {
+        for aaction in action
+            .get_pressed()
+            .iter()
+            .filter(|v| v != &&PlatformerAction::Horizontal)
+        {
+            dbg!(aaction);
+            // dbg!(action.action_data(*aaction));
         }
     }
 }

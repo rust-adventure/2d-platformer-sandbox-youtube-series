@@ -421,7 +421,7 @@ pub fn update_level_selection(
                 // && !level_selection
                 //     .is_match(&0, &ldtk_level.level)
                 {
-                    dbg!("level set");
+                    // dbg!("level set");
                     *level_selection = LevelSelection::Iid(
                         ldtk_level.level.iid.clone(),
                     );
