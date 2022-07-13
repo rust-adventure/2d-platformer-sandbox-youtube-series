@@ -4,24 +4,24 @@ use bevy_ecs_ldtk::prelude::*;
 
 use std::collections::{HashMap, HashSet};
 
-use heron::prelude::*;
+use bevy_rapier2d::{prelude::*, rapier::prelude::Cuboid};
 
-pub fn pause_physics_during_load(
-    mut level_events: EventReader<LevelEvent>,
-    mut physics_time: ResMut<PhysicsTime>,
-) {
-    for event in level_events.iter() {
-        match event {
-            LevelEvent::SpawnTriggered(_) => {
-                physics_time.set_scale(0.)
-            }
-            LevelEvent::Transformed(_) => {
-                physics_time.set_scale(1.)
-            }
-            _ => (),
-        }
-    }
-}
+// pub fn pause_physics_during_load(
+//     mut level_events: EventReader<LevelEvent>,
+//     mut physics_time: ResMut<PhysicsTime>,
+// ) {
+//     for event in level_events.iter() {
+//         match event {
+//             LevelEvent::SpawnTriggered(_) => {
+//                 physics_time.set_scale(0.)
+//             }
+//             LevelEvent::Transformed(_) => {
+//                 physics_time.set_scale(1.)
+//             }
+//             _ => (),
+//         }
+//     }
+// }
 
 pub fn movement(
     input: Res<Input<KeyCode>>,
@@ -37,7 +37,7 @@ pub fn movement(
         let left =
             if input.pressed(KeyCode::A) { 1. } else { 0. };
 
-        velocity.linear.x = (right - left) * 200.;
+        velocity.linvel.x = (right - left) * 200.;
 
         if climber.intersecting_climbables.is_empty() {
             climber.climbing = false;
@@ -59,13 +59,13 @@ pub fn movement(
                 0.
             };
 
-            velocity.linear.y = (up - down) * 200.;
+            velocity.linvel.y = (up - down) * 200.;
         }
 
         if input.just_pressed(KeyCode::Space)
             && ground_detection.on_ground
         {
-            velocity.linear.y = 900.;
+            velocity.linvel.y = 900.;
             climber.climbing = false;
         }
     }
@@ -211,22 +211,19 @@ dbg!(width,height);
                 for wall_rect in wall_rects {
                     commands
                         .spawn()
-                        .insert(CollisionShape::Cuboid {
-                            half_extends: Vec3::new(
+                        .insert(Collider::cuboid(
                                 (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
                                     * grid_size as f32
                                     / 2.,
                                 (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.)
                                     * grid_size as f32
                                     / 2.,
-                                0.,
-                            ),
-                            border_radius: None,
-                        })
-                        .insert(RigidBody::Static)
-                        .insert(PhysicMaterial {
-                            friction: 0.1,
-                            ..Default::default()
+                        ))
+                        .insert(RigidBody::Fixed)
+                        .insert(Friction{
+                            coefficient: 0.1,
+                            combine_rule:
+                                CoefficientCombineRule::Min,
                         })
                         .insert(Transform::from_xyz(
                             (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32 / 2.,
@@ -258,15 +255,14 @@ pub fn patrol(
             continue;
         }
 
-        let mut new_velocity = Vec3::from((
+        let mut new_velocity = Vec2::from(
             (patrol.points[patrol.index]
                 - transform.translation.truncate())
             .normalize()
                 * 75.,
-            0.,
-        ));
+        );
 
-        if new_velocity.dot(velocity.linear) < 0. {
+        if new_velocity.dot(velocity.linvel) < 0. {
             if patrol.index == 0 {
                 patrol.forward = true;
             } else if patrol.index
@@ -286,16 +282,13 @@ pub fn patrol(
                 patrol.index -= 1;
             }
 
-            new_velocity = Vec3::from((
-                (patrol.points[patrol.index]
-                    - transform.translation.truncate())
-                .normalize()
-                    * 75.,
-                0.,
-            ));
+            new_velocity = (patrol.points[patrol.index]
+                - transform.translation.truncate())
+            .normalize()
+                * 75.;
         }
 
-        velocity.linear = new_velocity;
+        velocity.linvel = new_velocity;
     }
 }
 
@@ -434,35 +427,28 @@ pub fn update_level_selection(
 pub fn spawn_ground_sensor(
     mut commands: Commands,
     detect_ground_for: Query<
-        (Entity, &CollisionShape, &Transform),
+        (Entity, &Collider, &Transform),
         Added<GroundDetection>,
     >,
 ) {
     for (entity, shape, transform) in
         detect_ground_for.iter()
     {
-        if let CollisionShape::Cuboid {
-            half_extends, ..
-        } = shape
+        if let Some(Cuboid { half_extents }) =
+            shape.raw.0.as_cuboid()
         {
-            let detector_shape = CollisionShape::Cuboid {
-                half_extends: Vec3::new(
-                    half_extends.x / 2.,
-                    2.,
-                    0.,
-                ),
-                border_radius: None,
-            };
+            let detector_shape =
+                Collider::cuboid(half_extents.x / 2., 2.);
 
             let sensor_translation =
-                Vec3::new(0., -half_extends.y, 0.)
+                Vec3::new(0., -half_extents.y, 0.)
                     / transform.scale;
 
             commands.entity(entity).with_children(
                 |builder| {
                     builder
                         .spawn()
-                        .insert(RigidBody::Sensor)
+                        .insert(Sensor)
                         .insert(detector_shape)
                         .insert(
                             Transform::from_translation(
@@ -492,20 +478,16 @@ pub fn ground_detection(
     {
         for collision in collisions.iter() {
             match collision {
-                CollisionEvent::Started(a, b) => {
-                    match rigid_bodies
-                        .get(b.rigid_body_entity())
-                    {
-                        Ok(RigidBody::Sensor) => {
-                            // don't consider sensors to be "the ground"
-                        }
+                CollisionEvent::Started(a, b, _) => {
+                    match rigid_bodies.get(*b) {
+                        // Ok(RigidBody::Sensor) => {
+                        //     // don't consider sensors to be "the ground"
+                        // }
                         Ok(_) => {
-                            if a.rigid_body_entity()
-                                == entity
-                            {
+                            if a == &entity {
                                 ground_sensor
                                 .intersecting_ground_entities
-                                .insert(b.rigid_body_entity());
+                                .insert(*b);
                             }
                         }
                         Err(_) => {
@@ -513,11 +495,11 @@ pub fn ground_detection(
                         }
                     }
                 }
-                CollisionEvent::Stopped(a, b) => {
-                    if a.rigid_body_entity() == entity {
+                CollisionEvent::Stopped(a, b, _) => {
+                    if a == &entity {
                         ground_sensor
                             .intersecting_ground_entities
-                            .remove(&b.rigid_body_entity());
+                            .remove(&b);
                     }
                 }
             }

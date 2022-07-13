@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::{AssetCollection, AssetLoader};
 use bevy_ecs_ldtk::prelude::*;
-use heron::{Gravity, PhysicsPlugin, Velocity};
+use bevy_rapier2d::prelude::*;
 use iyes_loopless::prelude::*;
 use iyes_progress::{ProgressCounter, ProgressPlugin};
 use leafwing_input_manager::prelude::*;
@@ -26,10 +26,8 @@ fn main() {
         .add_plugin(ProgressPlugin::new(
             GameState::AssetLoading,
         ))
-        .add_plugin(PhysicsPlugin::default())
-        .insert_resource(Gravity::from(Vec3::new(
-            0.0, -2000., 0.0,
-        )))
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+        .add_plugin(RapierDebugRenderPlugin::default())
         .add_plugin(LdtkPlugin)
         .add_plugin(MovementPlugin)
         .add_plugin(
@@ -50,16 +48,13 @@ fn main() {
             on_ground: false,
         })
         .add_enter_system(GameState::Playing, setup)
-        .add_system(
-            systems::camera_fit_inside_current_level,
-        )
-        .add_system(systems::pause_physics_during_load)
+        // .add_system(
+        //     systems::camera_fit_inside_current_level,
+        // )
+        // .add_system(systems::pause_physics_during_load)
         .add_system(systems::spawn_wall_collision)
         // .add_system(systems::movement)
         .add_system(systems::patrol)
-        .add_system(
-            systems::camera_fit_inside_current_level,
-        )
         .add_system(systems::update_level_selection)
         .add_system(systems::ground_detection)
         .add_system(systems::spawn_ground_sensor)
@@ -82,8 +77,9 @@ struct ImageAssets {
 }
 
 fn setup(mut commands: Commands, images: Res<ImageAssets>) {
-    let camera = OrthographicCameraBundle::new_2d();
+    let mut camera = OrthographicCameraBundle::new_2d();
 
+    camera.orthographic_projection.scale = 2.;
     commands.spawn_bundle(camera);
 
     commands.spawn_bundle(LdtkWorldBundle {

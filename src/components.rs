@@ -4,19 +4,22 @@ use bevy_ecs_ldtk::{
     prelude::*,
     utils::ldtk_pixel_coords_to_translation_pivoted,
 };
+use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::*;
 
 use std::collections::HashSet;
 
-use heron::prelude::*;
+// use heron::prelude::*;
 
-#[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
+#[derive(Clone, Default, Bundle, LdtkIntCell)]
 pub struct ColliderBundle {
-    pub collider: CollisionShape,
+    pub collider: Collider,
     pub rigid_body: RigidBody,
     pub velocity: Velocity,
-    pub rotation_constraints: RotationConstraints,
-    pub physic_material: PhysicMaterial,
+    pub rotation_constraints: LockedAxes,
+    pub friction: Friction,
+    pub restitution: Restitution,
+    pub mass_properties: ColliderMassProperties,
 }
 
 impl From<EntityInstance> for ColliderBundle {
@@ -24,40 +27,38 @@ impl From<EntityInstance> for ColliderBundle {
         entity_instance: EntityInstance,
     ) -> ColliderBundle {
         let rotation_constraints =
-            RotationConstraints::lock();
+            LockedAxes::ROTATION_LOCKED;
 
         match entity_instance.identifier.as_ref() {
             "Player" => ColliderBundle {
-                collider: CollisionShape::Cuboid {
-                    half_extends: Vec3::new(6., 14., 0.),
-                    border_radius: None,
-                },
+                collider: Collider::cuboid(6., 14.),
                 rigid_body: RigidBody::Dynamic,
                 rotation_constraints,
                 ..Default::default()
             },
             "Mob" => ColliderBundle {
-                collider: CollisionShape::Cuboid {
-                    half_extends: Vec3::new(5., 5., 0.),
-                    border_radius: None,
-                },
+                collider: Collider::cuboid(5., 5.),
                 rigid_body:
                     RigidBody::KinematicVelocityBased,
                 rotation_constraints,
                 ..Default::default()
             },
             "Chest" => ColliderBundle {
-                collider: CollisionShape::Cuboid {
-                    half_extends: Vec3::new(8., 8., 0.),
-                    border_radius: None,
-                },
+                collider: Collider::cuboid(8., 8.),
                 rigid_body: RigidBody::Dynamic,
                 rotation_constraints,
-                physic_material: PhysicMaterial {
-                    friction: 0.5,
-                    density: 15.0,
-                    ..Default::default()
+                friction: Friction {
+                    coefficient: 0.5,
+                    combine_rule:
+                        CoefficientCombineRule::Min,
                 },
+                restitution: Restitution {
+                    coefficient: 0.7,
+                    combine_rule:
+                        CoefficientCombineRule::Min,
+                },
+                mass_properties:
+                    ColliderMassProperties::Density(15.0),
                 ..Default::default()
             },
             _ => ColliderBundle::default(),
@@ -67,17 +68,11 @@ impl From<EntityInstance> for ColliderBundle {
 
 impl From<IntGridCell> for ColliderBundle {
     fn from(int_grid_cell: IntGridCell) -> ColliderBundle {
-        let rotation_constraints =
-            RotationConstraints::lock();
-
         if int_grid_cell.value == 2 {
             ColliderBundle {
-                collider: CollisionShape::Cuboid {
-                    half_extends: Vec3::new(8., 8., 0.),
-                    border_radius: None,
-                },
-                rigid_body: RigidBody::Sensor,
-                rotation_constraints,
+                collider: Collider::cuboid(8., 8.),
+                rotation_constraints:
+                    LockedAxes::ROTATION_LOCKED,
                 ..Default::default()
             }
         } else {
@@ -217,6 +212,7 @@ pub struct PlayerBundle {
     #[from_entity_instance]
     #[bundle]
     pub collider_bundle: ColliderBundle,
+    pub gravity_scale: GravityScale,
     pub player: Player,
     #[worldly]
     pub worldly: Worldly,
@@ -250,7 +246,7 @@ pub struct WallBundle {
 )]
 pub struct Climbable;
 
-#[derive(Clone, Debug, Default, Bundle, LdtkIntCell)]
+#[derive(Clone, Default, Bundle, LdtkIntCell)]
 pub struct LadderBundle {
     #[from_int_grid_cell]
     #[bundle]

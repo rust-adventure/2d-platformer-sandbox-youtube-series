@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use heron::Velocity;
+use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::InputMap;
 
 use crate::actions::*;
@@ -136,12 +136,12 @@ fn gamepad_input(
                     _ => {}
                 };
             };
-            velocity.linear.x = left_stick_pos.x * 300.;
+            velocity.linvel.x = left_stick_pos.x * 300.;
 
             // + left_stick_pos.x.signum() * 100.0;
-            // dbg!(velocity.linear.x, left_stick_pos.x);
+            // dbg!(velocity.linvel.x, left_stick_pos.x);
 
-            if (velocity.linear.x.abs() > 0.0)
+            if (velocity.linvel.x.abs() > 0.0)
                 && timer.is_none()
                 && ground_detection.on_ground
             {
@@ -150,7 +150,7 @@ fn gamepad_input(
                         0.1, true,
                     )),
                 );
-            } else if !(velocity.linear.x.abs() > 0.0) {
+            } else if !(velocity.linvel.x.abs() > 0.0) {
                 if let Some(_) = timer {
                     commands
                         .entity(entity)
@@ -177,7 +177,7 @@ fn gamepad_input(
         if buttons.just_pressed(jump_button)
             && ground_detection.on_ground
         {
-            velocity.linear.y = 900.;
+            velocity.linvel.y = 900.;
             sprite.index = 1;
             if let Some(_) = timer {
                 commands

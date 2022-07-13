@@ -1,8 +1,5 @@
 use bevy::prelude::*;
-use heron::{
-    rapier_plugin::{convert::IntoRapier, RigidBodyHandle},
-    Gravity, RigidBody, Velocity,
-};
+use bevy_rapier2d::prelude::*;
 use iyes_loopless::prelude::IntoConditionalSystem;
 use leafwing_input_manager::prelude::*;
 
@@ -51,13 +48,13 @@ fn jump(
             &mut Climber,
             &mut TextureAtlasSprite,
             // Option<&AnimationTimer>,
-            &RigidBodyHandle,
+            &mut GravityScale,
             &GroundDetection,
         ),
         With<Player>,
     >,
     player_state: Res<PlayerState>,
-    mut gravity: ResMut<Gravity>,
+    // mut gravity: ResMut<Gravity>,
     time: Res<Time>,
 ) {
     for action_state in query_action_state.iter() {
@@ -67,13 +64,13 @@ fn jump(
             mut climber,
             mut sprite,
             // timer,
-            body,
+            mut gravity_scale,
             ground_detection,
         ) in query_player.iter_mut()
         {
             if action_state
                 .just_released(PlatformerAction::Jump)
-                && velocity.linear.y >= 0.0
+                && velocity.linvel.y >= 0.0
             {
                 // *gravity = Gravity::from(Vec3::new(
                 //     0.0, -6000., 0.0,
@@ -84,11 +81,15 @@ fn jump(
                 // This feels way too abrupt
                 // should increase gravity instead
                 // velocity.linear.y = 0.3 * velocity.linear.y;
+
+                *gravity_scale = GravityScale(30.0);
             } else if action_state
                 .just_pressed(PlatformerAction::Jump)
-                && ground_detection.on_ground
+            // && ground_detection.on_ground
             {
-                velocity.linear.y = 900.;
+                *gravity_scale = GravityScale(1.0);
+
+                velocity.linvel.y = 200.;
 
                 sprite.index = 1;
                 // if let Some(_) = timer {
@@ -98,6 +99,7 @@ fn jump(
                 // }
             } else if ground_detection.on_ground {
                 sprite.index = 0;
+            } else {
             }
         }
     }
@@ -133,12 +135,12 @@ fn horizontal(
         {
             if action_state.pressed(PlatformerAction::Right)
             {
-                velocity.linear.x = 300.;
+                velocity.linvel.x = 300.;
                 sprite.flip_x = false;
             } else if action_state
                 .pressed(PlatformerAction::Left)
             {
-                velocity.linear.x = -300.;
+                velocity.linvel.x = -300.;
                 sprite.flip_x = true;
             } else if action_state
                 .pressed(PlatformerAction::Horizontal)
@@ -147,12 +149,12 @@ fn horizontal(
                     PlatformerAction::Horizontal,
                 );
                 if move_value == 0.0 {
-                    velocity.linear.x = 0.;
+                    velocity.linvel.x = 0.;
                 } else if move_value.signum() == 1.0 {
-                    velocity.linear.x = 300.;
+                    velocity.linvel.x = 300.;
                     sprite.flip_x = false;
                 } else if move_value.signum() == -1.0 {
-                    velocity.linear.x = -300.;
+                    velocity.linvel.x = -300.;
                     sprite.flip_x = true;
                 } else {
                     error!(
@@ -161,7 +163,7 @@ fn horizontal(
                     );
                 }
             } else {
-                velocity.linear.x = 0.;
+                velocity.linvel.x = 0.;
             }
         }
     }
