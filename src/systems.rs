@@ -207,9 +207,12 @@ dbg!(width,height);
                     previous_rects = current_rects;
                 }
 
+               
                 // spawn colliders for every rectangle
                 for wall_rect in wall_rects {
-                    commands
+                  
+                    commands.entity(level_entity).with_children(|builder| {
+                      builder
                         .spawn()
                         .insert(Collider::cuboid(
                                 (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
@@ -235,6 +238,7 @@ dbg!(width,height);
                         // 1. Adjusts the transforms to be relative to the level for free
                         // 2. the colliders will be despawned automatically when levels unload
                         .insert(Parent(level_entity));
+                    });
                 }
             }
         });
