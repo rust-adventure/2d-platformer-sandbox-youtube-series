@@ -168,7 +168,9 @@ impl From<EntityInstance> for Items {
             .iter()
             .find(|f| f.identifier == *"items")
         {
-            // convert &String to String which returns vec![String::from("Knife"), String::from("Boot")]
+            // convert &String to String which returns
+            // vec![String::from("Knife"),
+            // String::from("Boot")]
             items = match &field_instance.value {
                 FieldValue::Enums(v) => v
                     .iter()
@@ -219,11 +221,13 @@ pub struct PlayerBundle {
     pub climber: Climber,
     pub ground_detection: GroundDetection,
 
-    // Build Items Component manually by using `impl From<EntityInstance>
+    // Build Items Component manually by using `impl
+    // From<EntityInstance>
     #[from_entity_instance]
     items: Items,
 
-    // The whole EntityInstance can be stored directly as an EntityInstance component
+    // The whole EntityInstance can be stored directly as
+    // an EntityInstance component
     #[from_entity_instance]
     entity_instance: EntityInstance,
 
@@ -299,11 +303,15 @@ impl LdtkEntity for Patrol {
         {
             for ldtk_point in ldtk_points {
                 if let Some(ldtk_point) = ldtk_point {
-                    // The +1 is necessary here due to the pivot of the entities in the sample
+                    // The +1 is necessary here due to the
+                    // pivot of the entities in the sample
                     // file.
-                    // The patrols set up in the file look flat and grounded,
-                    // but technically they're not if you consider the pivot,
-                    // which is at the bottom-center for the skulls.
+                    // The patrols set up in the file look
+                    // flat and grounded,
+                    // but technically they're not if you
+                    // consider the pivot,
+                    // which is at the bottom-center for the
+                    // skulls.
                     let pixel_coords = (ldtk_point
                         .as_vec2()
                         + Vec2::new(0.5, 1.))

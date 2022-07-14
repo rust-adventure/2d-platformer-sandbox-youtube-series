@@ -71,22 +71,26 @@ pub fn movement(
     }
 }
 
-/// Spawns heron collisions for the walls of a level
+/// Spawns heron collisions for the walls of a
+/// level
 ///
-/// You could just insert a ColliderBundle in to the WallBundle,
-/// but this spawns a different collider for EVERY wall tile.
-/// This approach leads to bad performance.
+/// You could just insert a ColliderBundle in to
+/// the WallBundle, but this spawns a different
+/// collider for EVERY wall tile. This approach
+/// leads to bad performance.
 ///
-/// Instead, by flagging the wall tiles and spawning the collisions later,
-/// we can minimize the amount of colliding entities.
+/// Instead, by flagging the wall tiles and
+/// spawning the collisions later, we can minimize
+/// the amount of colliding entities.
 ///
-/// The algorithm used here is a nice compromise between simplicity, speed,
-/// and a small number of rectangle colliders.
-/// In basic terms, it will:
-/// 1. consider where the walls are
-/// 2. combine wall tiles into flat "plates" in each individual row
-/// 3. combine the plates into rectangles across multiple rows wherever possible
-/// 4. spawn colliders for each rectangle
+/// The algorithm used here is a nice compromise
+/// between simplicity, speed, and a small number
+/// of rectangle colliders. In basic terms, it
+/// will: 1. consider where the walls are
+/// 2. combine wall tiles into flat "plates" in
+/// each individual row 3. combine the plates into
+/// rectangles across multiple rows wherever
+/// possible 4. spawn colliders for each rectangle
 pub fn spawn_wall_collision(
     mut commands: Commands,
     wall_query: Query<(&GridCoords, &Parent), Added<Wall>>,
@@ -105,7 +109,8 @@ pub fn spawn_wall_collision(
     }
 
     // consider where the walls are
-    // storing them as GridCoords in a HashSet for quick, easy lookup
+    // storing them as GridCoords in a HashSet for
+    // quick, easy lookup
     let mut level_to_wall_locations: HashMap<
         Entity,
         HashSet<GridCoords>,
@@ -113,8 +118,11 @@ pub fn spawn_wall_collision(
 
     wall_query.for_each(
         |(&grid_coords, &Parent(parent))| {
-            // the intgrid tiles' direct parents will be bevy_ecs_tilemap chunks, not the level
-            // To get the level, you need their grandparents, which is where parent_query comes in
+            // the intgrid tiles' direct parents will be
+            // bevy_ecs_tilemap chunks, not the level
+            // To get the level, you need their
+            // grandparents, which is where parent_query
+            // comes in
             if let Ok(&Parent(level_entity)) =
                 parent_query.get(parent)
             {
@@ -485,7 +493,8 @@ pub fn ground_detection(
                 CollisionEvent::Started(a, b, _) => {
                     match rigid_bodies.get(*b) {
                         // Ok(RigidBody::Sensor) => {
-                        //     // don't consider sensors to be "the ground"
+                        //     // don't consider sensors to
+                        // be "the ground"
                         // }
                         Ok(_) => {
                             if a == &entity {

@@ -15,8 +15,9 @@ impl Plugin for GamepadPlugin {
             .add_system(animate_sprite);
     }
 }
-/// Simple resource to store the ID of the connected gamepad.
-/// We need to know which gamepad to use for player input.
+/// Simple resource to store the ID of the
+/// connected gamepad. We need to know which
+/// gamepad to use for player input.
 #[derive(Debug)]
 pub struct MyGamepad(pub Gamepad);
 
@@ -33,7 +34,8 @@ fn gamepad_connections(
                     id
                 );
 
-                // if we don't have any gamepad yet, use this one
+                // if we don't have any gamepad yet, use
+                // this one
                 if my_gamepad.is_none() {
                     commands
                         .insert_resource(MyGamepad(*id));
@@ -45,7 +47,8 @@ fn gamepad_connections(
                     id
                 );
 
-                // if it's the one we previously associated with the player,
+                // if it's the one we previously associated
+                // with the player,
                 // disassociate it:
                 if let Some(MyGamepad(old_id)) =
                     my_gamepad.as_deref()
@@ -109,7 +112,8 @@ fn gamepad_input(
         ground_detection,
     ) in query.iter_mut()
     {
-        // The joysticks are represented using a separate axis for X and Y
+        // The joysticks are represented using a separate
+        // axis for X and Y
 
         let axis_lx = GamepadAxis(
             gamepad,
@@ -157,7 +161,8 @@ fn gamepad_input(
                         .remove::<AnimationTimer>();
                 }
             }
-            // // Example: check if the stick is pushed up
+            // // Example: check if the stick is
+            // pushed up
             // if left_stick_pos.length() > 0.9
             //     && left_stick_pos.y > 0.5
             // {
@@ -166,7 +171,8 @@ fn gamepad_input(
             // }
         }
 
-        // In a real game, the buttons would be configurable, but here we hardcode them
+        // In a real game, the buttons would be
+        // configurable, but here we hardcode them
         let jump_button = GamepadButton(
             gamepad,
             GamepadButtonType::South,

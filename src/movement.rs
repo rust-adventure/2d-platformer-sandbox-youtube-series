@@ -76,11 +76,13 @@ fn jump(
                 //     0.0, -6000., 0.0,
                 // ));
 
-                // body.into_rapier().0..set_gravity_scale(3.);
+                // body.into_rapier().0..
+                // set_gravity_scale(3.);
 
                 // This feels way too abrupt
                 // should increase gravity instead
-                // velocity.linear.y = 0.3 * velocity.linear.y;
+                // velocity.linear.y = 0.3 *
+                // velocity.linear.y;
 
                 *gravity_scale = GravityScale(30.0);
             } else if action_state
@@ -180,7 +182,7 @@ fn debug_actions(
             .iter()
             .filter(|v| v != &&PlatformerAction::Horizontal)
         {
-            dbg!(aaction);
+            // dbg!(aaction);
             // dbg!(action.action_data(*aaction));
         }
     }
