@@ -70,27 +70,12 @@ fn jump(
         {
             if action_state
                 .just_released(PlatformerAction::Jump)
-                && velocity.linvel.y >= 0.0
             {
-                // *gravity = Gravity::from(Vec3::new(
-                //     0.0, -6000., 0.0,
-                // ));
-
-                // body.into_rapier().0..
-                // set_gravity_scale(3.);
-
-                // This feels way too abrupt
-                // should increase gravity instead
-                // velocity.linear.y = 0.3 *
-                // velocity.linear.y;
-
                 *gravity_scale = GravityScale(30.0);
             } else if action_state
                 .just_pressed(PlatformerAction::Jump)
-            // && ground_detection.on_ground
+                && ground_detection.on_ground
             {
-                *gravity_scale = GravityScale(1.0);
-
                 velocity.linvel.y = 200.;
 
                 sprite.index = 1;
@@ -101,6 +86,7 @@ fn jump(
                 // }
             } else if ground_detection.on_ground {
                 sprite.index = 0;
+                *gravity_scale = GravityScale(1.0);
             } else {
             }
         }

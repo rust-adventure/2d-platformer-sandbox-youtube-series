@@ -449,22 +449,25 @@ pub fn spawn_ground_sensor(
         if let Some(Cuboid { half_extents }) =
             shape.raw.0.as_cuboid()
         {
-            let detector_shape =
-                Collider::cuboid(half_extents.x / 2., 2.);
-
-            let sensor_translation =
-                Vec3::new(0., -half_extents.y, 0.)
-                    / transform.scale;
-
             commands.entity(entity).with_children(
                 |builder| {
                     builder
                         .spawn()
                         .insert(Sensor)
-                        .insert(detector_shape)
+                        .insert(Collider::cuboid(
+                            half_extents.x / 2.,
+                            2.,
+                        ))
+                        .insert(
+                            ActiveEvents::COLLISION_EVENTS,
+                        )
                         .insert(
                             Transform::from_translation(
-                                sensor_translation,
+                                Vec3::new(
+                                    0.,
+                                    -half_extents.y,
+                                    0.,
+                                ) / transform.scale,
                             ),
                         )
                         .insert(GlobalTransform::default())
@@ -483,7 +486,7 @@ pub fn ground_detection(
     mut ground_detectors: Query<&mut GroundDetection>,
     mut ground_sensors: Query<(Entity, &mut GroundSensor)>,
     mut collisions: EventReader<CollisionEvent>,
-    rigid_bodies: Query<&RigidBody>,
+    // rigid_bodies: Query<&RigidBody>,
 ) {
     for (entity, mut ground_sensor) in
         ground_sensors.iter_mut()
@@ -491,21 +494,10 @@ pub fn ground_detection(
         for collision in collisions.iter() {
             match collision {
                 CollisionEvent::Started(a, b, _) => {
-                    match rigid_bodies.get(*b) {
-                        // Ok(RigidBody::Sensor) => {
-                        //     // don't consider sensors to
-                        // be "the ground"
-                        // }
-                        Ok(_) => {
-                            if a == &entity {
-                                ground_sensor
-                                .intersecting_ground_entities
-                                .insert(*b);
-                            }
-                        }
-                        Err(_) => {
-                            panic!("If there's a collision, there should be an entity")
-                        }
+                    if a == &entity {
+                        ground_sensor
+                            .intersecting_ground_entities
+                            .insert(*b);
                     }
                 }
                 CollisionEvent::Stopped(a, b, _) => {
