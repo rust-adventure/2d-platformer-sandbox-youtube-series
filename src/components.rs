@@ -369,5 +369,5 @@ pub struct GroundDetection {
 #[derive(Component)]
 pub struct GroundSensor {
     pub ground_detection_entity: Entity,
-    pub intersecting_ground_entities: HashSet<Entity>,
+    // pub intersecting_ground_entities: HashSet<Entity>, // probably not needed anymore
 }
