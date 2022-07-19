@@ -473,8 +473,8 @@ pub fn spawn_ground_sensor(
                         .insert(GlobalTransform::default())
                         .insert(GroundSensor {
                             ground_detection_entity: entity,
-                            intersecting_ground_entities:
-                                HashSet::new(),
+                            // intersecting_ground_entities:
+                            //     HashSet::new(), // probably not needed anymore
                         });
                 },
             );
@@ -484,39 +484,22 @@ pub fn spawn_ground_sensor(
 
 pub fn ground_detection(
     mut ground_detectors: Query<&mut GroundDetection>,
-    mut ground_sensors: Query<(Entity, &mut GroundSensor)>,
-    mut collisions: EventReader<CollisionEvent>,
+    ground_sensors: Query<(Entity, &GroundSensor)>,
+    rapier_context: Res<RapierContext>,
     // rigid_bodies: Query<&RigidBody>,
 ) {
-    for (entity, mut ground_sensor) in
-        ground_sensors.iter_mut()
-    {
-        for collision in collisions.iter() {
-            match collision {
-                CollisionEvent::Started(a, b, _) => {
-                    if a == &entity {
-                        ground_sensor
-                            .intersecting_ground_entities
-                            .insert(*b);
-                    }
-                }
-                CollisionEvent::Stopped(a, b, _) => {
-                    if a == &entity {
-                        ground_sensor
-                            .intersecting_ground_entities
-                            .remove(&b);
-                    }
-                }
+    for (entity, ground_sensor) in ground_sensors.iter() {
+        let mut intersection = false;
+        for (_collider1, _collider2, intersecting) in rapier_context.intersections_with(entity) {
+            if intersecting {
+                intersection = intersecting;
             }
         }
-
         if let Ok(mut ground_detection) = ground_detectors
-            .get_mut(ground_sensor.ground_detection_entity)
+        .get_mut(ground_sensor.ground_detection_entity)
         {
-            ground_detection.on_ground = ground_sensor
-                .intersecting_ground_entities
-                .len()
-                > 0;
+            ground_detection.on_ground = intersection;
         }
     }
+    
 }
