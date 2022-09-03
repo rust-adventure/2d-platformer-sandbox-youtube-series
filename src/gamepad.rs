@@ -1,9 +1,6 @@
-use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
-use leafwing_input_manager::prelude::InputMap;
-
 use crate::actions::*;
-use crate::components::{Climber, GroundDetection, Player};
+use bevy::prelude::*;
+use leafwing_input_manager::prelude::InputMap;
 
 pub struct GamepadPlugin;
 

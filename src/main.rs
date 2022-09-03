@@ -7,8 +7,8 @@ use iyes_progress::{ProgressCounter, ProgressPlugin};
 use leafwing_input_manager::prelude::*;
 use platformer::{
     actions::PlatformerAction,
-    components::{self, Climber, GroundDetection, Player},
-    gamepad::{AnimationTimer, GamepadPlugin},
+    components::{self, GroundDetection},
+    gamepad::GamepadPlugin,
     movement::MovementPlugin,
     systems, GameState,
 };
