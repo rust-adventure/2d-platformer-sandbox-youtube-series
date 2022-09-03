@@ -70,27 +70,22 @@ pub fn movement(
         }
     }
 }
-
-/// Spawns heron collisions for the walls of a
-/// level
+/// Spawns heron collisions for the walls of a level
 ///
-/// You could just insert a ColliderBundle in to
-/// the WallBundle, but this spawns a different
-/// collider for EVERY wall tile. This approach
-/// leads to bad performance.
+/// You could just insert a ColliderBundle in to the WallBundle,
+/// but this spawns a different collider for EVERY wall tile.
+/// This approach leads to bad performance.
 ///
-/// Instead, by flagging the wall tiles and
-/// spawning the collisions later, we can minimize
-/// the amount of colliding entities.
+/// Instead, by flagging the wall tiles and spawning the collisions later,
+/// we can minimize the amount of colliding entities.
 ///
-/// The algorithm used here is a nice compromise
-/// between simplicity, speed, and a small number
-/// of rectangle colliders. In basic terms, it
-/// will: 1. consider where the walls are
-/// 2. combine wall tiles into flat "plates" in
-/// each individual row 3. combine the plates into
-/// rectangles across multiple rows wherever
-/// possible 4. spawn colliders for each rectangle
+/// The algorithm used here is a nice compromise between simplicity, speed,
+/// and a small number of rectangle colliders.
+/// In basic terms, it will:
+/// 1. consider where the walls are
+/// 2. combine wall tiles into flat "plates" in each individual row
+/// 3. combine the plates into rectangles across multiple rows wherever possible
+/// 4. spawn colliders for each rectangle
 pub fn spawn_wall_collision(
     mut commands: Commands,
     wall_query: Query<(&GridCoords, &Parent), Added<Wall>>,
@@ -108,31 +103,42 @@ pub fn spawn_wall_collision(
         right: i32,
     }
 
-    // consider where the walls are
-    // storing them as GridCoords in a HashSet for
-    // quick, easy lookup
+    /// A simple rectangle type representing a wall of any size
+    #[derive(
+        Copy, Clone, Eq, PartialEq, Debug, Default, Hash,
+    )]
+    struct Rect {
+        left: i32,
+        right: i32,
+        top: i32,
+        bottom: i32,
+    }
+
+    // Consider where the walls are
+    // storing them as GridCoords in a HashSet for quick, easy lookup
+    //
+    // The key of this map will be the entity of the level the wall belongs to.
+    // This has two consequences in the resulting collision entities:
+    // 1. it forces the walls to be split along level boundaries
+    // 2. it lets us easily add the collision entities as children of the appropriate level entity
     let mut level_to_wall_locations: HashMap<
         Entity,
         HashSet<GridCoords>,
     > = HashMap::new();
 
-    wall_query.for_each(
-        |(&grid_coords, &Parent(parent))| {
-            // the intgrid tiles' direct parents will be
-            // bevy_ecs_tilemap chunks, not the level
-            // To get the level, you need their
-            // grandparents, which is where parent_query
-            // comes in
-            if let Ok(&Parent(level_entity)) =
-                parent_query.get(parent)
-            {
-                level_to_wall_locations
-                    .entry(level_entity)
-                    .or_insert(HashSet::new())
-                    .insert(grid_coords);
-            }
-        },
-    );
+    wall_query.for_each(|(&grid_coords, parent)| {
+        // An intgrid tile's direct parent will be a layer entity, not the level entity
+        // To get the level entity, you need the tile's grandparent.
+        // This is where parent_query comes in.
+        if let Ok(grandparent) =
+            parent_query.get(parent.get())
+        {
+            level_to_wall_locations
+                .entry(grandparent.get())
+                .or_insert(HashSet::new())
+                .insert(grid_coords);
+        }
+    });
 
     if !wall_query.is_empty() {
         level_query.for_each(|(level_entity, level_handle)| {
@@ -151,7 +157,7 @@ pub fn spawn_wall_collision(
                     .layer_instances
                     .clone()
                     .expect("Level asset should have layers")[0];
-dbg!(width,height);
+
                 // combine wall tiles into flat "plates" in each individual row
                 let mut plate_stack: Vec<Vec<Plate>> = Vec::new();
 
@@ -179,15 +185,15 @@ dbg!(width,height);
                 }
 
                 // combine "plates" into rectangles across multiple rows
-                let mut wall_rects: Vec<Rect<i32>> = Vec::new();
-                let mut previous_rects: HashMap<Plate, Rect<i32>> = HashMap::new();
+                let mut wall_rects: Vec<Rect> = Vec::new();
+                let mut previous_rects: HashMap<Plate, Rect> = HashMap::new();
 
                 // an extra empty row so the algorithm "terminates" the rects that touch the top
                 // edge
                 plate_stack.push(Vec::new());
 
                 for (y, row) in plate_stack.iter().enumerate() {
-                    let mut current_rects: HashMap<Plate, Rect<i32>> = HashMap::new();
+                    let mut current_rects: HashMap<Plate, Rect> = HashMap::new();
                     for plate in row {
                         if let Some(previous_rect) = previous_rects.remove(plate) {
                             current_rects.insert(
@@ -215,39 +221,38 @@ dbg!(width,height);
                     previous_rects = current_rects;
                 }
 
-               
-                // spawn colliders for every rectangle
-                for wall_rect in wall_rects {
-                  
-                    commands.entity(level_entity).with_children(|builder| {
-                      builder
-                        .spawn()
-                        .insert(Collider::cuboid(
-                                (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
-                                    * grid_size as f32
+                commands.entity(level_entity).with_children(|level| {
+                    // Spawn colliders for every rectangle..
+                    // Making the collider a child of the level serves two purposes:
+                    // 1. Adjusts the transforms to be relative to the level for free
+                    // 2. the colliders will be despawned automatically when levels unload
+                    for wall_rect in wall_rects {
+                        level
+                            .spawn()
+                            .insert(Collider::cuboid(
+                                    (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
+                                        * grid_size as f32
+                                        / 2.,
+                                    (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.)
+                                        * grid_size as f32
+                                        / 2.,
+                            ))
+                            .insert(RigidBody::Fixed)
+                            .insert(Friction{
+                                coefficient: 0.1,
+                                combine_rule:
+                                    CoefficientCombineRule::Min,
+                            })
+                            .insert(Transform::from_xyz(
+                                (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32
                                     / 2.,
-                                (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.)
-                                    * grid_size as f32
+                                (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32
                                     / 2.,
-                        ))
-                        .insert(RigidBody::Fixed)
-                        .insert(Friction{
-                            coefficient: 0.1,
-                            combine_rule:
-                                CoefficientCombineRule::Min,
-                        })
-                        .insert(Transform::from_xyz(
-                            (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32 / 2.,
-                            (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32 / 2.,
-                            0.,
-                        ))
-                        .insert(GlobalTransform::default())
-                        // Making the collider a child of the level serves two purposes:
-                        // 1. Adjusts the transforms to be relative to the level for free
-                        // 2. the colliders will be despawned automatically when levels unload
-                        .insert(Parent(level_entity));
-                    });
-                }
+                                0.,
+                            ))
+                            .insert(GlobalTransform::default());
+                    }
+                });
             }
         });
     }
@@ -406,27 +411,31 @@ pub fn update_level_selection(
         if let Some(ldtk_level) =
             ldtk_levels.get(level_handle)
         {
-            let level_bounds = Rect {
-                bottom: level_transform.translation.y,
-                top: level_transform.translation.y
-                    + ldtk_level.level.px_hei as f32,
-                left: level_transform.translation.x,
-                right: level_transform.translation.x
-                    + ldtk_level.level.px_wid as f32,
+            let level_bounds = bevy::sprite::Rect {
+                min: Vec2::new(
+                    level_transform.translation.x,
+                    level_transform.translation.y,
+                ),
+                max: Vec2::new(
+                    level_transform.translation.x
+                        + ldtk_level.level.px_wid as f32,
+                    level_transform.translation.y
+                        + ldtk_level.level.px_hei as f32,
+                ),
             };
+
             for player_transform in player_query.iter() {
                 if player_transform.translation.x
-                    < level_bounds.right
+                    < level_bounds.max.x
                     && player_transform.translation.x
-                        > level_bounds.left
+                        > level_bounds.min.x
                     && player_transform.translation.y
-                        < level_bounds.top
+                        < level_bounds.max.y
                     && player_transform.translation.y
-                        > level_bounds.bottom
+                        > level_bounds.min.y
                 // && !level_selection
                 //     .is_match(&0, &ldtk_level.level)
                 {
-                    // dbg!("level set");
                     *level_selection = LevelSelection::Iid(
                         ldtk_level.level.iid.clone(),
                     );
@@ -517,6 +526,18 @@ pub fn ground_detection(
                 .intersecting_ground_entities
                 .len()
                 > 0;
+        }
+    }
+}
+
+pub fn restart_level(
+    mut commands: Commands,
+    level_query: Query<Entity, With<Handle<LdtkLevel>>>,
+    input: Res<Input<KeyCode>>,
+) {
+    if input.just_pressed(KeyCode::R) {
+        for level_entity in level_query.iter() {
+            commands.entity(level_entity).insert(Respawn);
         }
     }
 }

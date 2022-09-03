@@ -133,9 +133,8 @@ fn horizontal(
             } else if action_state
                 .pressed(PlatformerAction::Horizontal)
             {
-                let move_value = action_state.action_value(
-                    PlatformerAction::Horizontal,
-                );
+                let move_value = action_state
+                    .value(PlatformerAction::Horizontal);
                 if move_value == 0.0 {
                     velocity.linvel.x = 0.;
                 } else if move_value.signum() == 1.0 {

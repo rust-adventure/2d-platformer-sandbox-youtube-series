@@ -7,20 +7,20 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.57"
-bevy = "0.7.0"
-bevy_asset_loader = { version = "0.11.0", features = [
+bevy = "0.8.1"
+bevy_asset_loader = { version = "0.12.1", features = [
     "2d",
     "stageless",
     "progress_tracking",
     "progress_tracking_stageless",
 ] }
-bevy_ecs_ldtk = "0.3.0"
-bevy_ecs_tilemap = "0.6.0"
-bevy_rapier2d = "0.15.0"
-iyes_loopless = "0.5.1"
-iyes_progress = { version = "0.3.0", features = ["iyes_loopless"] }
-ldtk_rust = "0.5.3"
-leafwing_input_manager = {git="https://github.com/Leafwing-Studios/leafwing-input-manager", branch="dev",ref="a230d693b460e055e9b6b316c761e4367ca4a42d"}
+bevy_ecs_ldtk = "0.4.0"
+bevy_ecs_tilemap = "0.7.0"
+bevy_rapier2d = "0.16.2"
+iyes_loopless = "0.7.1"
+iyes_progress = { version = "0.5.0", features = ["iyes_loopless"] }
+ldtk_rust = "0.6.0"
+leafwing-input-manager = "0.5.2"
 serde = "1.0.136"
 serde_json = "1.0.79"
 

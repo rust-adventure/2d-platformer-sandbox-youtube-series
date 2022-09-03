@@ -104,7 +104,7 @@ impl Default for PlayerInput {
         input_map.insert(GamepadButtonType::DPadLeft, Left);
 
         input_map.insert(
-            SingleGamepadAxis::symmetric(
+            SingleAxis::symmetric(
                 GamepadAxisType::LeftStickX,
                 0.1,
             ),
@@ -145,7 +145,7 @@ impl Default for PlayerInput {
             GamepadButtonType::Select,
             PlatformerAction::Menus,
         );
-        input_map.set_gamepad(Gamepad(0));
+        input_map.set_gamepad(Gamepad { id: 0 });
         Self {
             input: InputManagerBundle::<PlatformerAction> {
                 input_map,
@@ -207,6 +207,7 @@ pub struct PlayerBundle {
         113.,
         9,
         3,
+        0.,
         0.,
         0
     )]

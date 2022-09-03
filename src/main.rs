@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_asset_loader::{AssetCollection, AssetLoader};
+use bevy_asset_loader::prelude::*;
 use bevy_ecs_ldtk::prelude::*;
 use bevy_rapier2d::prelude::*;
 use iyes_loopless::prelude::*;
@@ -16,7 +16,7 @@ use platformer::{
 fn main() {
     let mut app = App::new();
     app.add_loopless_state(GameState::AssetLoading);
-    AssetLoader::new(GameState::AssetLoading)
+    LoadingState::new(GameState::AssetLoading)
         // https://github.com/NiklasEi/bevy_asset_loader/issues/54
         .continue_to_state(GameState::Playing)
         .with_collection::<ImageAssets>()
@@ -77,10 +77,8 @@ struct ImageAssets {
 }
 
 fn setup(mut commands: Commands, images: Res<ImageAssets>) {
-    let mut camera = OrthographicCameraBundle::new_2d();
-
     // camera.orthographic_projection.scale = 2.;
-    commands.spawn_bundle(camera);
+    commands.spawn_bundle(Camera2dBundle::default());
 
     commands.spawn_bundle(LdtkWorldBundle {
         ldtk_handle: images.map.clone(),
