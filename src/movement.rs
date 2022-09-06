@@ -46,7 +46,7 @@ fn jump(
             Entity,
             &mut Velocity,
             &mut Climber,
-            &mut TextureAtlasSprite,
+            // &mut TextureAtlasSprite,
             // Option<&AnimationTimer>,
             &mut GravityScale,
             &GroundDetection,
@@ -62,7 +62,7 @@ fn jump(
             entity,
             mut velocity,
             mut climber,
-            mut sprite,
+            // mut sprite,
             // timer,
             mut gravity_scale,
             ground_detection,
@@ -78,14 +78,14 @@ fn jump(
             {
                 velocity.linvel.y = 200.;
 
-                sprite.index = 1;
+                // sprite.index = 1;
                 // if let Some(_) = timer {
                 //     commands
                 //         .entity(entity)
                 //         .remove::<AnimationTimer>();
                 // }
             } else if ground_detection.on_ground {
-                sprite.index = 0;
+                // sprite.index = 0;
                 *gravity_scale = GravityScale(1.0);
             } else {
             }
@@ -93,64 +93,79 @@ fn jump(
     }
 }
 
+const TargetTopSpeed: f32 = 300.0;
+/// clamped_input is a 0.0-1.0 value representing the user's
+/// desired percentage of top speed to hold
+///
+/// `current_velocity` is the current horizontal velocity
+fn calc_force_diff(
+    clamped_input: f32,
+    current_velocity: f32,
+    target_velocity: f32,
+) -> f32 {
+    let target_speed = target_velocity * clamped_input;
+    let diff_to_make_up = target_speed - current_velocity;
+    let new_force = diff_to_make_up * 2.0;
+    new_force
+}
 fn horizontal(
     query_action_state: Query<
         &ActionState<PlatformerAction>,
     >,
-    mut commands: Commands,
     // axes: Res<Axis<GamepadAxis>>,
     mut query_player: Query<
         (
             Entity,
             &mut Velocity,
-            &mut Climber,
-            &mut TextureAtlasSprite,
+            &mut ExternalForce,
+            // &mut TextureAtlasSprite,
             // Option<&AnimationTimer>,
-            &GroundDetection,
         ),
         With<Player>,
     >,
+    time: Res<Time>,
 ) {
     for action_state in query_action_state.iter() {
         for (
             entity,
             mut velocity,
-            mut climber,
-            mut sprite,
+            mut force,
+            // mut sprite,
             // timer,
-            ground_detection,
         ) in query_player.iter_mut()
         {
             if action_state.pressed(PlatformerAction::Right)
             {
-                velocity.linvel.x = 300.;
-                sprite.flip_x = false;
+                let new_horizontal_force = calc_force_diff(
+                    action_state.clamped_value(
+                        PlatformerAction::Right,
+                    ),
+                    velocity.linvel.x,
+                    TargetTopSpeed,
+                );
+
+                force.force.x = new_horizontal_force;
+                // sprite.flip_x = false;
             } else if action_state
                 .pressed(PlatformerAction::Left)
             {
-                velocity.linvel.x = -300.;
-                sprite.flip_x = true;
-            } else if action_state
-                .pressed(PlatformerAction::Horizontal)
-            {
-                let move_value = action_state
-                    .value(PlatformerAction::Horizontal);
-                if move_value == 0.0 {
-                    velocity.linvel.x = 0.;
-                } else if move_value.signum() == 1.0 {
-                    velocity.linvel.x = 300.;
-                    sprite.flip_x = false;
-                } else if move_value.signum() == -1.0 {
-                    velocity.linvel.x = -300.;
-                    sprite.flip_x = true;
-                } else {
-                    error!(
-                        "unexpected move_value {}",
-                        move_value
-                    );
-                }
+                let new_horizontal_force = calc_force_diff(
+                    action_state.clamped_value(
+                        PlatformerAction::Left,
+                    ),
+                    velocity.linvel.x,
+                    -TargetTopSpeed,
+                );
+
+                force.force.x = new_horizontal_force;
+                // sprite.flip_x = true;
             } else {
-                velocity.linvel.x = 0.;
+                if velocity.linvel.x.abs() > 0.01 {
+                    let new_horizontal_force =
+                        -velocity.linvel.x;
+
+                    force.force.x = new_horizontal_force;
+                }
             }
         }
     }

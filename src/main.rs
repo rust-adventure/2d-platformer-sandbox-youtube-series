@@ -62,6 +62,7 @@ fn main() {
             "Player",
         )
         .add_system(systems::restart_level)
+        .add_system(systems::player_added)
         .register_ldtk_int_cell::<components::WallBundle>(1)
         .add_plugin(GamepadPlugin)
         .add_system_to_stage(

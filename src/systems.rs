@@ -1,5 +1,5 @@
 use crate::components::*;
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use bevy_ecs_ldtk::prelude::*;
 
 use std::collections::{HashMap, HashSet};
@@ -22,6 +22,38 @@ use bevy_rapier2d::{prelude::*, rapier::prelude::Cuboid};
 //         }
 //     }
 // }
+
+pub fn player_added(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+    players: Query<
+        (Entity, &Transform),
+        (Added<EntityInstance>, With<Player>),
+    >,
+) {
+    let mesh = meshes.add(Mesh::from(shape::Capsule {
+        radius: 12.0,
+        depth: 24.0,
+        ..default()
+    }));
+    let material = materials.add(ColorMaterial::from(
+        Color::hex("1fa9f4").unwrap(),
+    ));
+    for (player, transform) in players.iter() {
+        commands.entity(player).insert_bundle(
+            MaterialMesh2dBundle {
+                mesh: mesh.clone().into(),
+                material: material.clone(),
+                transform: transform.clone(),
+                ..default()
+            },
+        );
+        // .insert(mesh.clone())
+        // .insert(material.clone())
+        // .insert(Visibility::visible());
+    }
+}
 
 pub fn movement(
     input: Res<Input<KeyCode>>,
