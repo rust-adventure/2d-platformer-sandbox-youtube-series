@@ -41,6 +41,8 @@ fn main() {
                 },
             set_clear_color:
                 SetClearColor::FromLevelBackground,
+            // level_background: LevelBackground::Nonexistent,
+                
             ..Default::default()
         })
         .insert_resource(LevelSelection::Index(0))
@@ -48,9 +50,9 @@ fn main() {
             on_ground: false,
         })
         .add_enter_system(GameState::Playing, setup)
-        .add_system(
-            systems::camera_fit_inside_current_level,
-        )
+        // .add_system(
+        //     systems::camera_fit_inside_current_level,
+        // )
         // .add_system(systems::pause_physics_during_load)
         .add_system(systems::spawn_wall_collision)
         // .add_system(systems::movement)

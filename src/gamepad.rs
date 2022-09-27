@@ -2,6 +2,8 @@ use crate::actions::*;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::InputMap;
 
+mod visualizer;
+use visualizer::*;
 pub struct GamepadPlugin;
 
 impl Plugin for GamepadPlugin {
@@ -9,7 +11,8 @@ impl Plugin for GamepadPlugin {
         app.add_system(gamepad_connections)
             // .add_system(gamepad_input)
             .add_system(on_change_gamepad)
-            .add_system(animate_sprite);
+            .add_system(animate_sprite)
+            .add_plugin(GamepadVisualizerPlugin);
     }
 }
 /// Simple resource to store the ID of the
