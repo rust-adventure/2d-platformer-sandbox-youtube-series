@@ -12,7 +12,8 @@ impl Plugin for GamepadPlugin {
             // .add_system(gamepad_input)
             .add_system(on_change_gamepad)
             .add_system(animate_sprite)
-            .add_plugin(GamepadVisualizerPlugin);
+            // .add_plugin(GamepadVisualizerPlugin)
+            ;
     }
 }
 /// Simple resource to store the ID of the
