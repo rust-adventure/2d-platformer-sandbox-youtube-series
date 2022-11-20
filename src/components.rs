@@ -32,7 +32,8 @@ impl From<EntityInstance> for ColliderBundle {
             "Player" => ColliderBundle {
                 // collider: Collider::cuboid(6., 14.),
                 collider: Collider::capsule_y(12., 12.),
-                rigid_body: RigidBody::Dynamic,
+                rigid_body:
+                    RigidBody::KinematicPositionBased,
                 rotation_constraints,
                 ..Default::default()
             },
@@ -221,6 +222,7 @@ pub struct PlayerBundle {
     pub worldly: Worldly,
     pub climber: Climber,
     pub ground_detection: GroundDetection,
+    pub controller: KinematicCharacterController,
 
     // Build Items Component manually by using `impl
     // From<EntityInstance>

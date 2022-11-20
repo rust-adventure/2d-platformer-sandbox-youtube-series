@@ -16,7 +16,7 @@ bevy_asset_loader = { version = "0.12.1", features = [
 ] }
 bevy_ecs_ldtk = "0.4.0"
 bevy_ecs_tilemap = "0.7.0"
-bevy_rapier2d = "0.16.2"
+bevy_rapier2d = "0.18.0"
 iyes_loopless = "0.7.1"
 iyes_progress = { version = "0.5.0", features = ["iyes_loopless"] }
 ldtk_rust = "0.6.0"

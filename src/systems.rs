@@ -523,45 +523,6 @@ pub fn spawn_ground_sensor(
     }
 }
 
-pub fn ground_detection(
-    mut ground_detectors: Query<&mut GroundDetection>,
-    mut ground_sensors: Query<(Entity, &mut GroundSensor)>,
-    mut collisions: EventReader<CollisionEvent>,
-    // rigid_bodies: Query<&RigidBody>,
-) {
-    for (entity, mut ground_sensor) in
-        ground_sensors.iter_mut()
-    {
-        for collision in collisions.iter() {
-            match collision {
-                CollisionEvent::Started(a, b, _) => {
-                    if a == &entity {
-                        ground_sensor
-                            .intersecting_ground_entities
-                            .insert(*b);
-                    }
-                }
-                CollisionEvent::Stopped(a, b, _) => {
-                    if a == &entity {
-                        ground_sensor
-                            .intersecting_ground_entities
-                            .remove(&b);
-                    }
-                }
-            }
-        }
-
-        if let Ok(mut ground_detection) = ground_detectors
-            .get_mut(ground_sensor.ground_detection_entity)
-        {
-            ground_detection.on_ground = ground_sensor
-                .intersecting_ground_entities
-                .len()
-                > 0;
-        }
-    }
-}
-
 pub fn restart_level(
     mut commands: Commands,
     level_query: Query<Entity, With<Handle<LdtkLevel>>>,

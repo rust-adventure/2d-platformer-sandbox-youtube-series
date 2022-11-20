@@ -58,7 +58,6 @@ fn main() {
         // .add_system(systems::movement)
         .add_system(systems::patrol)
         .add_system(systems::update_level_selection)
-        .add_system(systems::ground_detection)
         .add_system(systems::spawn_ground_sensor)
         .register_ldtk_entity::<components::PlayerBundle>(
             "Player",
