@@ -23,5 +23,6 @@ ldtk_rust = "0.6.0"
 leafwing-input-manager = "0.5.2"
 serde = "1.0.136"
 serde_json = "1.0.79"
+statig = "0.2.0"
 
 [features]

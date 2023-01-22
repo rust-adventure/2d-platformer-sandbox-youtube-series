@@ -1,9 +1,9 @@
-use std::time::Duration;
-
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use iyes_loopless::prelude::IntoConditionalSystem;
 use leafwing_input_manager::prelude::*;
+use statig::{prelude::*, InitializedStatemachine};
+use std::time::Duration;
 
 use crate::components::{Climber, GroundDetection, Player};
 use crate::{actions::*, GameState};
@@ -12,29 +12,70 @@ pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<PlayerState>()
-            .add_system(
-                jump.run_in_state(GameState::Playing),
-            )
-            // // .add_system(Movement_input)
-            .add_system(
-                horizontal.run_in_state(GameState::Playing),
-            )
-            .add_system(debug_actions);
+        app.insert_resource(
+            PlayerStateMachine::default()
+                .state_machine()
+                .init(),
+        )
+        .add_system(jump.run_in_state(GameState::Playing))
+        // // .add_system(Movement_input)
+        .add_system(
+            horizontal.run_in_state(GameState::Playing),
+        )
+        .add_system(debug_actions);
     }
 }
 
-enum PlayerState {
-    Idle,
-    Jumping,
-    Falling,
+#[derive(Default)]
+struct PlayerStateMachine;
+pub enum Event {
+    Jump,
+    Heal,
+    Crouch,
 }
-impl Default for PlayerState {
-    fn default() -> Self {
-        PlayerState::Idle
+
+type PlayerState =
+    InitializedStatemachine<PlayerStateMachine>;
+#[state_machine(initial = "State::idle()")]
+impl PlayerStateMachine {
+    #[state]
+    fn idle(event: &Event) -> Response<State> {
+        let t = PlayerStateMachine::default()
+            .state_machine()
+            .init();
+        match event {
+            Event::Jump => Transition(State::jumping()),
+            Event::Heal => Transition(State::healing()),
+            Event::Crouch => Transition(State::crouching()),
+        }
+    }
+    #[state]
+    fn jumping(event: &Event) -> Response<State> {
+        match event {
+            Event::Jump => Transition(State::jumping()),
+            Event::Heal => Transition(State::healing()),
+            Event::Crouch => Transition(State::crouching()),
+        }
+    }
+    #[state]
+    fn healing(event: &Event) -> Response<State> {
+        match event {
+            Event::Jump => Transition(State::jumping()),
+            Event::Heal => Transition(State::healing()),
+            Event::Crouch => Transition(State::crouching()),
+        }
+    }
+    #[state]
+    fn crouching(event: &Event) -> Response<State> {
+        match event {
+            Event::Jump => Transition(State::jumping()),
+            Event::Heal => Transition(State::healing()),
+            Event::Crouch => Transition(State::crouching()),
+        }
     }
 }
 
+fn jumping() {}
 fn jump(
     query_action_state: Query<
         &ActionState<PlatformerAction>,
@@ -46,6 +87,7 @@ fn jump(
         &Velocity,
     )>,
     time: Res<Time>,
+    // player_state: Res<PlayerState>,
     player_state: Res<PlayerState>,
 ) {
     for action_state in query_action_state.iter() {
@@ -102,7 +144,7 @@ fn jump(
                                 PlatformerAction::Jump,
                             );
                         if has_held_jump_for_duration
-                            >= Duration::from_secs(2)
+                            >= Duration::from_millis(200)
                         {
                             controller.translation =
                                 match controller.translation
@@ -114,6 +156,20 @@ fn jump(
                                     None => {
                                         Some(Vec2::new(
                                             0.0, -8.0,
+                                        ))
+                                    }
+                                };
+                        } else {
+                            controller.translation =
+                                match controller.translation
+                                {
+                                    Some(mut v) => {
+                                        v.y = 20.0;
+                                        Some(v)
+                                    }
+                                    None => {
+                                        Some(Vec2::new(
+                                            0.0, 20.0,
                                         ))
                                     }
                                 };
