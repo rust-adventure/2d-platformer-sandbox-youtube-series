@@ -73,7 +73,7 @@ fn main() {
         .run();
 }
 
-#[derive(AssetCollection)]
+#[derive(AssetCollection, Resource)]
 struct ImageAssets {
     #[asset(path = "sandbox.ldtk")]
     map: Handle<LdtkAsset>,
@@ -81,9 +81,9 @@ struct ImageAssets {
 
 fn setup(mut commands: Commands, images: Res<ImageAssets>) {
     // camera.orthographic_projection.scale = 2.;
-    commands.spawn_bundle(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle::default());
 
-    commands.spawn_bundle(LdtkWorldBundle {
+    commands.spawn(LdtkWorldBundle {
         ldtk_handle: images.map.clone(),
         ..Default::default()
     });

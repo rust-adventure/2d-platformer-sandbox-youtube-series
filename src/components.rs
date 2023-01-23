@@ -1,4 +1,6 @@
-use crate::actions::PlatformerAction;
+use crate::{
+    actions::PlatformerAction, movement::PlayerState,
+};
 use bevy::prelude::*;
 use bevy_ecs_ldtk::{
     prelude::*,
@@ -223,7 +225,7 @@ pub struct PlayerBundle {
     pub climber: Climber,
     pub ground_detection: GroundDetection,
     pub controller: KinematicCharacterController,
-
+    pub state: PlayerState,
     // Build Items Component manually by using `impl
     // From<EntityInstance>
     #[from_entity_instance]
@@ -363,7 +365,7 @@ pub struct ChestBundle {
     pub collider_bundle: ColliderBundle,
 }
 
-#[derive(Clone, Default, Component)]
+#[derive(Clone, Default, Component, Resource)]
 pub struct GroundDetection {
     pub on_ground: bool,
 }

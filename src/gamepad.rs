@@ -2,8 +2,6 @@ use crate::actions::*;
 use bevy::prelude::*;
 use leafwing_input_manager::prelude::InputMap;
 
-mod visualizer;
-use visualizer::*;
 pub struct GamepadPlugin;
 
 impl Plugin for GamepadPlugin {
@@ -11,15 +9,13 @@ impl Plugin for GamepadPlugin {
         app.add_system(gamepad_connections)
             // .add_system(gamepad_input)
             .add_system(on_change_gamepad)
-            .add_system(animate_sprite)
-            // .add_plugin(GamepadVisualizerPlugin)
-            ;
+            .add_system(animate_sprite);
     }
 }
 /// Simple resource to store the ID of the
 /// connected gamepad. We need to know which
 /// gamepad to use for player input.
-#[derive(Debug)]
+#[derive(Debug, Resource)]
 pub struct MyGamepad(pub Gamepad);
 
 fn gamepad_connections(
@@ -33,7 +29,8 @@ fn gamepad_connections(
     } in gamepad_evr.iter()
     {
         match event_type {
-            GamepadEventType::Connected => {
+            GamepadEventType::Connected(_info) => {
+                // dbg!(info);
                 println!(
                     "New gamepad connected with ID: {:?}",
                     gamepad.id
@@ -100,9 +97,9 @@ fn on_change_gamepad(
 //         With<Player>,
 //     >,
 // ) {
-//     let gamepad = if let Some(gp) = my_gamepad {
-//         // a gamepad is connected, we have the id
-//         gp.0
+//     let gamepad = if let Some(gp) = my_gamepad
+// {         // a gamepad is connected, we have
+// the id         gp.0
 //     } else {
 //         // no gamepad is connected
 //         return;
@@ -118,8 +115,8 @@ fn on_change_gamepad(
 //         ground_detection,
 //     ) in query.iter_mut()
 //     {
-//         // The joysticks are represented using a separate
-//         // axis for X and Y
+//         // The joysticks are represented using
+// a separate         // axis for X and Y
 
 //         let axis_lx = GamepadAxis(
 //             gamepad,
@@ -131,13 +128,13 @@ fn on_change_gamepad(
 //         );
 
 //         if let (Some(x), Some(y)) =
-//             (axes.get(axis_lx), axes.get(axis_ly))
-//         {
+//             (axes.get(axis_lx),
+// axes.get(axis_ly))         {
 //             // combine X and Y into one vector
-//             let left_stick_pos = Vec2::new(x, y);
-//             if left_stick_pos.x != 0.0 {
-//                 match left_stick_pos.x.signum() {
-//                     -1.0 => {
+//             let left_stick_pos = Vec2::new(x,
+// y);             if left_stick_pos.x != 0.0 {
+//                 match left_stick_pos.x.signum()
+// {                     -1.0 => {
 //                         sprite.flip_x = true;
 //                     }
 //                     1.0 => {
@@ -146,29 +143,31 @@ fn on_change_gamepad(
 //                     _ => {}
 //                 };
 //             };
-//             velocity.linvel.x = left_stick_pos.x * 300.;
+//             velocity.linvel.x =
+// left_stick_pos.x * 300.;
 
-//             // + left_stick_pos.x.signum() * 100.0;
-//             // dbg!(velocity.linvel.x, left_stick_pos.x);
+//             // + left_stick_pos.x.signum() *
+// 100.0;             // dbg!(velocity.linvel.x,
+// left_stick_pos.x);
 
 //             if (velocity.linvel.x.abs() > 0.0)
 //                 && timer.is_none()
 //                 && ground_detection.on_ground
 //             {
 //                 commands.entity(entity).insert(
-//                     AnimationTimer(Timer::from_seconds(
-//                         0.1, true,
-//                     )),
+//
+// AnimationTimer(Timer::from_seconds(
+// 0.1, true,                     )),
 //                 );
-//             } else if !(velocity.linvel.x.abs() > 0.0) {
-//                 if let Some(_) = timer {
-//                     commands
+//             } else if !(velocity.linvel.x.abs()
+// > 0.0) {                 if let Some(_) = timer
+// {                     commands
 //                         .entity(entity)
-//                         .remove::<AnimationTimer>();
-//                 }
+//
+// .remove::<AnimationTimer>();                 }
 //             }
-//             // // Example: check if the stick is
-//             // pushed up
+//             // // Example: check if the stick
+// is             // pushed up
 //             // if left_stick_pos.length() > 0.9
 //             //     && left_stick_pos.y > 0.5
 //             // {
@@ -178,13 +177,14 @@ fn on_change_gamepad(
 //         }
 
 //         // In a real game, the buttons would be
-//         // configurable, but here we hardcode them
-//         let jump_button = GamepadButton(
+//         // configurable, but here we hardcode
+// them         let jump_button = GamepadButton(
 //             gamepad,
 //             GamepadButtonType::South,
 //         );
 //         let heal_button =
-//             GamepadButton(gamepad, GamepadButtonType::East);
+//             GamepadButton(gamepad,
+// GamepadButtonType::East);
 
 //         if buttons.just_pressed(jump_button)
 //             && ground_detection.on_ground
@@ -194,15 +194,15 @@ fn on_change_gamepad(
 //             if let Some(_) = timer {
 //                 commands
 //                     .entity(entity)
-//                     .remove::<AnimationTimer>();
-//             }
+//
+// .remove::<AnimationTimer>();             }
 //         } else if ground_detection.on_ground {
 //             sprite.index = 0;
 //         }
 
 //         if buttons.pressed(heal_button) {
-//             // button being held down: heal the player
-//             dbg!("circle");
+//             // button being held down: heal the
+// player             dbg!("circle");
 //         }
 //     }
 // }

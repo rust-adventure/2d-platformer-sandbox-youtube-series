@@ -102,22 +102,26 @@ pub fn movement(
         }
     }
 }
-/// Spawns heron collisions for the walls of a level
+/// Spawns heron collisions for the walls of a
+/// level
 ///
-/// You could just insert a ColliderBundle in to the WallBundle,
-/// but this spawns a different collider for EVERY wall tile.
-/// This approach leads to bad performance.
+/// You could just insert a ColliderBundle in to
+/// the WallBundle, but this spawns a different
+/// collider for EVERY wall tile. This approach
+/// leads to bad performance.
 ///
-/// Instead, by flagging the wall tiles and spawning the collisions later,
-/// we can minimize the amount of colliding entities.
+/// Instead, by flagging the wall tiles and
+/// spawning the collisions later, we can minimize
+/// the amount of colliding entities.
 ///
-/// The algorithm used here is a nice compromise between simplicity, speed,
-/// and a small number of rectangle colliders.
-/// In basic terms, it will:
-/// 1. consider where the walls are
-/// 2. combine wall tiles into flat "plates" in each individual row
-/// 3. combine the plates into rectangles across multiple rows wherever possible
-/// 4. spawn colliders for each rectangle
+/// The algorithm used here is a nice compromise
+/// between simplicity, speed, and a small number
+/// of rectangle colliders. In basic terms, it
+/// will: 1. consider where the walls are
+/// 2. combine wall tiles into flat "plates" in
+/// each individual row 3. combine the plates into
+/// rectangles across multiple rows wherever
+/// possible 4. spawn colliders for each rectangle
 pub fn spawn_wall_collision(
     mut commands: Commands,
     wall_query: Query<(&GridCoords, &Parent), Added<Wall>>,
@@ -135,7 +139,8 @@ pub fn spawn_wall_collision(
         right: i32,
     }
 
-    /// A simple rectangle type representing a wall of any size
+    /// A simple rectangle type representing a
+    /// wall of any size
     #[derive(
         Copy, Clone, Eq, PartialEq, Debug, Default, Hash,
     )]
@@ -147,20 +152,25 @@ pub fn spawn_wall_collision(
     }
 
     // Consider where the walls are
-    // storing them as GridCoords in a HashSet for quick, easy lookup
+    // storing them as GridCoords in a HashSet for
+    // quick, easy lookup
     //
-    // The key of this map will be the entity of the level the wall belongs to.
-    // This has two consequences in the resulting collision entities:
-    // 1. it forces the walls to be split along level boundaries
-    // 2. it lets us easily add the collision entities as children of the appropriate level entity
+    // The key of this map will be the entity of the
+    // level the wall belongs to. This has two
+    // consequences in the resulting collision
+    // entities: 1. it forces the walls to be
+    // split along level boundaries 2. it lets us
+    // easily add the collision entities as children
+    // of the appropriate level entity
     let mut level_to_wall_locations: HashMap<
         Entity,
         HashSet<GridCoords>,
     > = HashMap::new();
 
     wall_query.for_each(|(&grid_coords, parent)| {
-        // An intgrid tile's direct parent will be a layer entity, not the level entity
-        // To get the level entity, you need the tile's grandparent.
+        // An intgrid tile's direct parent will be a layer
+        // entity, not the level entity To get the
+        // level entity, you need the tile's grandparent.
         // This is where parent_query comes in.
         if let Ok(grandparent) =
             parent_query.get(parent.get())
@@ -260,29 +270,28 @@ pub fn spawn_wall_collision(
                     // 2. the colliders will be despawned automatically when levels unload
                     for wall_rect in wall_rects {
                         level
-                            .spawn()
-                            .insert(Collider::cuboid(
+                            .spawn((Collider::cuboid(
                                     (wall_rect.right as f32 - wall_rect.left as f32 + 1.)
                                         * grid_size as f32
                                         / 2.,
                                     (wall_rect.top as f32 - wall_rect.bottom as f32 + 1.)
                                         * grid_size as f32
                                         / 2.,
-                            ))
-                            .insert(RigidBody::Fixed)
-                            .insert(Friction{
+                            ),
+                            RigidBody::Fixed,
+                            Friction{
                                 coefficient: 0.1,
                                 combine_rule:
                                     CoefficientCombineRule::Min,
-                            })
-                            .insert(Transform::from_xyz(
+                            },
+                            Transform::from_xyz(
                                 (wall_rect.left + wall_rect.right + 1) as f32 * grid_size as f32
                                     / 2.,
                                 (wall_rect.bottom + wall_rect.top + 1) as f32 * grid_size as f32
                                     / 2.,
                                 0.,
-                            ))
-                            .insert(GlobalTransform::default());
+                            ),
+                            GlobalTransform::default()));
                     }
                 });
             }
@@ -443,7 +452,7 @@ pub fn update_level_selection(
         if let Some(ldtk_level) =
             ldtk_levels.get(level_handle)
         {
-            let level_bounds = bevy::sprite::Rect {
+            let level_bounds = bevy::math::Rect {
                 min: Vec2::new(
                     level_transform.translation.x,
                     level_transform.translation.y,
@@ -492,31 +501,27 @@ pub fn spawn_ground_sensor(
         {
             commands.entity(entity).with_children(
                 |builder| {
-                    builder
-                        .spawn()
-                        .insert(Sensor)
-                        .insert(Collider::cuboid(
+                    builder.spawn((
+                        Sensor,
+                        Collider::cuboid(
                             half_extents.x / 2.,
                             2.,
-                        ))
-                        .insert(
-                            ActiveEvents::COLLISION_EVENTS,
-                        )
-                        .insert(
-                            Transform::from_translation(
-                                Vec3::new(
-                                    0.,
-                                    -half_extents.y,
-                                    0.,
-                                ) / transform.scale,
-                            ),
-                        )
-                        .insert(GlobalTransform::default())
-                        .insert(GroundSensor {
+                        ),
+                        ActiveEvents::COLLISION_EVENTS,
+                        Transform::from_translation(
+                            Vec3::new(
+                                0.,
+                                -half_extents.y,
+                                0.,
+                            ) / transform.scale,
+                        ),
+                        GlobalTransform::default(),
+                        GroundSensor {
                             ground_detection_entity: entity,
                             intersecting_ground_entities:
                                 HashSet::new(),
-                        });
+                        },
+                    ));
                 },
             );
         }
